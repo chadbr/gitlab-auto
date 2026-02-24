@@ -13,14 +13,15 @@ program.command('add-item')
     .description('Add a new Item to a repository and link it to an existing GitLab Epic')
     .argument('<epicGroupPath>', 'Path of the Group containing the Epic')
     .argument('<epicTitle>', 'Title of the Epic')
-    .argument('<repoPath>', 'Path of the repository for the new Item')
+    .argument('<repoListFilename>', 'Filename containing a line-separated list of repository paths for the new Item')
     .argument('<itemTitle>', 'Title of the new Item')
-    .argument('<itemContent>', 'Content/Body of the new Item')
-    .action(async (epicGroupPath, epicTitle, repoPath, itemTitle, itemContent) => {
+    .argument('<itemFilename>', 'Filename to read the Content/Body of the new Item from')
+    .action(async (epicGroupPath, epicTitle, repoListFilename, itemTitle, itemFilename) => {
     try {
-        await (0, addItem_1.addItem)(epicGroupPath, epicTitle, repoPath, itemTitle, itemContent);
+        await (0, addItem_1.addItem)(epicGroupPath, epicTitle, repoListFilename, itemTitle, itemFilename);
     }
     catch (e) {
+        console.error(e);
         process.exit(1);
     }
 });
@@ -33,6 +34,7 @@ program.command('list-items')
         await (0, listItems_1.listItems)(epicGroupPath, epicTitle);
     }
     catch (e) {
+        console.error(e);
         process.exit(1);
     }
 });
@@ -46,6 +48,7 @@ program.command('get-epic')
         await (0, getEpic_1.getEpicDetails)(epicGroupPath, epicTitle);
     }
     catch (e) {
+        console.error(e);
         process.exit(1);
     }
 });

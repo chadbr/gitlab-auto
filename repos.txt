@@ -1,0 +1,3 @@
+osdu/platform/system/reference/schema-upgrade
+osdu/platform/another-repo
+osdu/platform/system/reference/unit-service

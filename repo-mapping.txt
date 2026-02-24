@@ -1,0 +1,22 @@
+CRS Catalog -> osdu/platform/system/reference/crs-catalog-service
+CRS Conversion -> osdu/platform/system/reference/crs-conversion-service
+CSV Parser DAG -> osdu/platform/data-flow/ingestion/csv-parser/csv-parser
+Dataset -> osdu/platform/system/dataset
+EDS -> osdu/platform/data-flow/ingestion/external-data-sources/eds-dms
+Entitlements -> osdu/platform/security-and-compliance/entitlements
+File -> osdu/platform/system/file
+GCZ -> osdu/platform/consumption/geospatial
+Indexer -> osdu/platform/system/indexer-service
+Legal -> osdu/platform/security-and-compliance/legal
+Notification -> osdu/platform/system/notification
+Partition -> osdu/platform/system/partition
+Production Core -> NOT FOUND (No clear mapping in all-repos.txt)
+Project & Workflow -> osdu/platform/system/project-and-workflow
+Register -> osdu/platform/system/register
+Schema -> osdu/platform/system/schema-service
+Schema Upgrade -> osdu/platform/system/reference/schema-upgrade
+Search -> osdu/platform/system/search-service
+Secret -> osdu/platform/security-and-compliance/secret
+Storage -> osdu/platform/system/storage
+Unit -> osdu/platform/system/reference/unit-service
+Workflow -> osdu/platform/system/project-and-workflow

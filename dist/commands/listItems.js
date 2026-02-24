@@ -17,7 +17,9 @@ async function listItems(epicGroupPath, epicTitle) {
         }
         console.log(`\nFound ${issues.length} items:`);
         issues.forEach((issue) => {
-            console.log(`- [${issue.state}] ${issue.title} (${issue.web_url})`);
+            const tags = issue.labels && issue.labels.length > 0 ? ` [Tags: ${issue.labels.join(', ')}]` : '';
+            const milestone = issue.milestone ? ` [Milestone: ${issue.milestone.title}]` : '';
+            console.log(`- [${issue.state}] ${issue.title}${tags}${milestone} (${issue.web_url})`);
         });
     }
     catch (error) {

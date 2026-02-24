@@ -30,15 +30,15 @@ You can run the CLI using `node dist/index.js` or `ts-node src/index.ts`.
 Adds a new issue to a repository and links it to an existing Epic.
 
 ```bash
-node dist/index.js add-item "my-group/subgroup" "My Epic Title" "my-group/my-project" "New Feature Issue" "Details about the feature..."
+node dist/index.js add-item "my-group/subgroup" "My Epic Title" "repos.txt" "New Feature Issue" "path/to/issue-description.md"
 ```
 
 **Parameters:**
 1.  **Epic Group Path**: The full path to the group containing the Epic (e.g., `gitlab-org/gitlab`).
 2.  **Epic Title**: The exact title of the existing Epic.
-3.  **Repo Path**: The path to the repository where the issue should be created (e.g., `gitlab-org/gitlab-runner`).
+3.  **Repo List Filename**: The path to a file containing a line-separated list of repository paths where the issue should be created (e.g., `repos.txt`).
 4.  **Item Title**: The title of the new issue.
-5.  **Item Content**: The description/body of the new issue.
+5.  **Item Filename**: The path to a file containing the description/body of the new issue.
 
 ### List Items in Epic
 Lists all issues linked to an Epic.
@@ -70,7 +70,7 @@ node dist/index.js get-epic "my-group/subgroup" "My Epic Title"
 ---
 Venus epic specifics
 
-npm start add-item "/osdu/platform/" "[Venus] Decouple CSP dependencies from pipelines" "osdu/platform/system/reference/schema-upgrade" "New Feature Issue" "Details about the feature..."
+npm start add-item "/osdu/platform/" "[Venus] Decouple CSP dependencies from pipelines" "repos.txt" "New Feature Issue" "item-content.md"
 
 npm start get-epic "/osdu/platform/" "[Venus] Decouple CSP dependencies from pipelines"
 npm start list-items "/osdu/platform/" "[Venus] Decouple CSP dependencies from pipelines"

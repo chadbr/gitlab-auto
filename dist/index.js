@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = require("commander");
 const addItem_1 = require("./commands/addItem");
+const updateItem_1 = require("./commands/updateItem");
 const listItems_1 = require("./commands/listItems");
 const program = new commander_1.Command();
 program
@@ -11,14 +12,34 @@ program
     .version('0.0.1');
 program.command('add-item')
     .description('Add a new Item to a repository and link it to an existing GitLab Epic')
-    .argument('<epicGroupPath>', 'Path of the Group containing the Epic')
-    .argument('<epicTitle>', 'Title of the Epic')
-    .argument('<repoListFilename>', 'Filename containing a line-separated list of repository paths for the new Item')
-    .argument('<itemTitle>', 'Title of the new Item')
-    .argument('<itemFilename>', 'Filename to read the Content/Body of the new Item from')
-    .action(async (epicGroupPath, epicTitle, repoListFilename, itemTitle, itemFilename) => {
+    .requiredOption('--epic-group-path <path>', 'Path of the Group containing the Epic')
+    .requiredOption('--epic-title <title>', 'Title of the Epic')
+    .requiredOption('--item-title <title>', 'Title of the new Item')
+    .requiredOption('--item-filename <filename>', 'Filename to read the Content/Body of the new Item from')
+    .option('--filter <field=value>', 'Filter repositories based on properties from repo-info.json (can be used multiple times)', (val, prev) => prev.concat([val]), [])
+    .option('--milestone <title>', 'Milestone title to assign to the new Item')
+    .option('--labels <labels>', 'Comma-separated list of labels to assign to the new Item')
+    .action(async (options) => {
     try {
-        await (0, addItem_1.addItem)(epicGroupPath, epicTitle, repoListFilename, itemTitle, itemFilename);
+        await (0, addItem_1.addItem)(options);
+    }
+    catch (e) {
+        console.error(e);
+        process.exit(1);
+    }
+});
+program.command('update-item')
+    .description('Update an existing Item in a repository that is linked to a GitLab Epic')
+    .requiredOption('--epic-group-path <path>', 'Path of the Group containing the Epic')
+    .requiredOption('--epic-title <title>', 'Title of the Epic')
+    .requiredOption('--item-title <title>', 'Title of the Item to update')
+    .requiredOption('--item-filename <filename>', 'Filename to read the updated Content/Body of the Item from')
+    .option('--filter <field=value>', 'Filter repositories based on properties from repo-info.json (can be used multiple times)', (val, prev) => prev.concat([val]), [])
+    .option('--milestone <title>', 'Milestone title to assign to the updated Item')
+    .option('--labels <labels>', 'Comma-separated list of labels to assign to the updated Item')
+    .action(async (options) => {
+    try {
+        await (0, updateItem_1.updateItem)(options);
     }
     catch (e) {
         console.error(e);

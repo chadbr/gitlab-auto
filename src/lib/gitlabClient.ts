@@ -58,6 +58,22 @@ export async function getEpic(groupId: number, epicTitle: string): Promise<any> 
     }
 }
 
+export async function getGroupMilestoneId(groupId: number, milestoneTitle: string): Promise<number> {
+    try {
+        const milestones = await api.GroupMilestones.all(groupId, { title: milestoneTitle });
+        // The API might return multiple if the string matches partially depending on implementation, so let's find exact match
+        const milestone = milestones.find((m: any) => m.title === milestoneTitle);
+
+        if (!milestone) {
+            throw new Error(`Milestone with title "${milestoneTitle}" not found in group ${groupId}`);
+        }
+        return milestone.id;
+    } catch (error: any) {
+        console.error(`Error finding milestone "${milestoneTitle}": ${error.message}`);
+        throw error;
+    }
+}
+
 export async function getProjectId(projectPath: string): Promise<number> {
     try {
         // Project paths are URL encoded when using show

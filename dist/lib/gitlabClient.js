@@ -7,6 +7,7 @@ exports.api = void 0;
 exports.getGroupId = getGroupId;
 exports.getEpicIid = getEpicIid;
 exports.getEpic = getEpic;
+exports.getGroupMilestoneId = getGroupMilestoneId;
 exports.getProjectId = getProjectId;
 const rest_1 = require("@gitbeaker/rest");
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -57,6 +58,21 @@ async function getEpic(groupId, epicTitle) {
     }
     catch (error) {
         console.error(`Error finding epic "${epicTitle}": ${error.message}`);
+        throw error;
+    }
+}
+async function getGroupMilestoneId(groupId, milestoneTitle) {
+    try {
+        const milestones = await exports.api.GroupMilestones.all(groupId, { title: milestoneTitle });
+        // The API might return multiple if the string matches partially depending on implementation, so let's find exact match
+        const milestone = milestones.find((m) => m.title === milestoneTitle);
+        if (!milestone) {
+            throw new Error(`Milestone with title "${milestoneTitle}" not found in group ${groupId}`);
+        }
+        return milestone.id;
+    }
+    catch (error) {
+        console.error(`Error finding milestone "${milestoneTitle}": ${error.message}`);
         throw error;
     }
 }

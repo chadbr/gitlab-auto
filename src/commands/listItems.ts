@@ -1,3 +1,4 @@
+import { EpicIssueSchema } from '@gitbeaker/rest';
 import { api, getGroupId, getEpicIid } from '../lib/gitlabClient';
 
 export async function listItems(epicGroupPath: string, epicTitle: string) {
@@ -11,7 +12,7 @@ export async function listItems(epicGroupPath: string, epicTitle: string) {
         const epicIid = await getEpicIid(groupId, epicTitle);
 
         // 3. List Issues in Epic
-        const issues = await api.EpicIssues.all(groupId, epicIid);
+        const issues: EpicIssueSchema[] = await api.EpicIssues.all(groupId, epicIid);
 
         if (issues.length === 0) {
             console.log('No items found in this Epic.');

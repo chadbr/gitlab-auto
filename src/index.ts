@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import { addItem } from './commands/addItem';
+import { updateItem } from './commands/updateItem';
 import { listItems } from './commands/listItems';
 
 const program = new Command();
@@ -13,14 +14,34 @@ program
 
 program.command('add-item')
     .description('Add a new Item to a repository and link it to an existing GitLab Epic')
-    .argument('<epicGroupPath>', 'Path of the Group containing the Epic')
-    .argument('<epicTitle>', 'Title of the Epic')
-    .argument('<repoListFilename>', 'Filename containing a line-separated list of repository paths for the new Item')
-    .argument('<itemTitle>', 'Title of the new Item')
-    .argument('<itemFilename>', 'Filename to read the Content/Body of the new Item from')
-    .action(async (epicGroupPath, epicTitle, repoListFilename, itemTitle, itemFilename) => {
+    .requiredOption('--epic-group-path <path>', 'Path of the Group containing the Epic')
+    .requiredOption('--epic-title <title>', 'Title of the Epic')
+    .requiredOption('--item-title <title>', 'Title of the new Item')
+    .requiredOption('--item-filename <filename>', 'Filename to read the Content/Body of the new Item from')
+    .option('--filter <field=value>', 'Filter repositories based on properties from repo-info.json (can be used multiple times)', (val: string, prev: string[]) => prev.concat([val]), [])
+    .option('--milestone <title>', 'Milestone title to assign to the new Item')
+    .option('--labels <labels>', 'Comma-separated list of labels to assign to the new Item')
+    .action(async (options) => {
         try {
-            await addItem(epicGroupPath, epicTitle, repoListFilename, itemTitle, itemFilename);
+            await addItem(options);
+        } catch (e: any) {
+            console.error(e);
+            process.exit(1);
+        }
+    });
+
+program.command('update-item')
+    .description('Update an existing Item in a repository that is linked to a GitLab Epic')
+    .requiredOption('--epic-group-path <path>', 'Path of the Group containing the Epic')
+    .requiredOption('--epic-title <title>', 'Title of the Epic')
+    .requiredOption('--item-title <title>', 'Title of the Item to update')
+    .requiredOption('--item-filename <filename>', 'Filename to read the updated Content/Body of the Item from')
+    .option('--filter <field=value>', 'Filter repositories based on properties from repo-info.json (can be used multiple times)', (val: string, prev: string[]) => prev.concat([val]), [])
+    .option('--milestone <title>', 'Milestone title to assign to the updated Item')
+    .option('--labels <labels>', 'Comma-separated list of labels to assign to the updated Item')
+    .action(async (options) => {
+        try {
+            await updateItem(options);
         } catch (e: any) {
             console.error(e);
             process.exit(1);

@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
 
-export interface AddItemOptions {
+export interface UpdateItemOptions {
     epicGroupPath: string;
     epicTitle: string;
     itemTitle: string;
@@ -14,9 +14,9 @@ export interface AddItemOptions {
     labels?: string;
 }
 
-export async function addItem(options: AddItemOptions) {
+export async function updateItem(options: UpdateItemOptions) {
     const { epicGroupPath, epicTitle, itemTitle, itemFilename, filter, milestone, labels } = options;
-    console.log(`Adding item "${itemTitle}" and linking to Epic "${epicTitle}" in group "${epicGroupPath}" using content from "${itemFilename}"...`);
+    console.log(`Updating item "${itemTitle}" in Epic "${epicTitle}" in group "${epicGroupPath}" using content from "${itemFilename}"...`);
 
     let itemContent: string;
     try {
@@ -45,7 +45,7 @@ export async function addItem(options: AddItemOptions) {
             }
         }
     } else {
-        console.warn('WARNING: No filters provided. This will add the item to ALL repositories.');
+        console.warn('WARNING: No filters provided. This will update the item in ALL repositories.');
         const rl = readline.createInterface({ input, output });
         const answer = await rl.question('Are you sure you want to proceed? (y/n): ');
         rl.close();
@@ -76,6 +76,9 @@ export async function addItem(options: AddItemOptions) {
             console.log(`Found Milestone ID: ${milestoneId}`);
         }
 
+        console.log('Fetching issues currently linked to Epic...');
+        const epicIssues = await api.EpicIssues.all(groupId, epicIid);
+
         for (const repo of filteredRepos) {
             const repoPath = repo.Repository.replace('https://community.opengroup.org/', '');
             console.log(`\n--- Processing repo: ${repoPath} ---`);
@@ -84,8 +87,16 @@ export async function addItem(options: AddItemOptions) {
                 const projectId = await getProjectId(repoPath);
                 console.log(`Found Project ID: ${projectId}`);
 
-                // 4. Create Issue
-                console.log('Creating issue...');
+                // 4. Find Issue to Update
+                const issueToUpdate = epicIssues.find((i: any) => i.project_id === projectId && i.title === itemTitle);
+
+                if (!issueToUpdate) {
+                    console.log(`Issue "${itemTitle}" not found in this epic for project ${projectId}. Skipping.`);
+                    continue;
+                }
+
+                // 5. Update Issue
+                console.log(`Updating issue #${issueToUpdate.iid}...`);
                 const issueData: any = { description: itemContent };
                 if (milestoneId) {
                     issueData.milestoneId = milestoneId;
@@ -93,14 +104,10 @@ export async function addItem(options: AddItemOptions) {
                 if (labels) {
                     issueData.labels = labels;
                 }
-                const issue: any = await api.Issues.create(projectId, itemTitle, issueData);
-                console.log(`Created Issue #${issue.iid} in project ${projectId}: ${issue.web_url}`);
 
-                // 5. Link Issue to Epic
-                // POST /groups/:id/epics/:epic_iid/issues/:issue_id
-                console.log('Linking issue to epic...');
-                await api.EpicIssues.assign(groupId, epicIid, issue.id);
-                console.log('Successfully linked issue to Epic.');
+                // @gitbeaker/rest Issues.edit signature: (projectId, issueIid, options)
+                const updatedIssue: any = await api.Issues.edit(projectId, issueToUpdate.iid, issueData);
+                console.log(`Updated Issue #${updatedIssue.iid} in project ${projectId}: ${updatedIssue.web_url}`);
             } catch (repoError: any) {
                 console.error(`Failed to process repo ${repoPath}:`, repoError.message);
                 // Continue with other repos
@@ -108,7 +115,7 @@ export async function addItem(options: AddItemOptions) {
         }
 
     } catch (error: any) {
-        console.error('Failed to add items:', error.message);
+        console.error('Failed to update items:', error.message);
         throw error;
     }
 }

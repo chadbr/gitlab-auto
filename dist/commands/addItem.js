@@ -36,8 +36,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.addItem = addItem;
 const gitlabClient_1 = require("../lib/gitlabClient");
 const fs = __importStar(require("fs"));
-async function addItem(epicGroupPath, epicTitle, repoListFilename, itemTitle, itemFilename) {
-    console.log(`Adding item "${itemTitle}" to repos from "${repoListFilename}" and linking to Epic "${epicTitle}" in group "${epicGroupPath}" using content from "${itemFilename}"...`);
+const path = __importStar(require("path"));
+const readline = __importStar(require("readline/promises"));
+const process_1 = require("process");
+async function addItem(options) {
+    const { epicGroupPath, epicTitle, itemTitle, itemFilename, filter, milestone, labels } = options;
+    console.log(`Adding item "${itemTitle}" and linking to Epic "${epicTitle}" in group "${epicGroupPath}" using content from "${itemFilename}"...`);
     let itemContent;
     try {
         itemContent = fs.readFileSync(itemFilename, 'utf8');
@@ -45,16 +49,37 @@ async function addItem(epicGroupPath, epicTitle, repoListFilename, itemTitle, it
     catch (err) {
         throw new Error(`Failed to read file ${itemFilename}: ${err.message}`);
     }
-    let repoPaths = [];
+    let repos = [];
     try {
-        const repoListContent = fs.readFileSync(repoListFilename, 'utf8');
-        repoPaths = repoListContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        const repoInfoPath = path.resolve(process.cwd(), 'repo-info.json');
+        const repoListContent = fs.readFileSync(repoInfoPath, 'utf8');
+        repos = JSON.parse(repoListContent);
     }
     catch (err) {
-        throw new Error(`Failed to read repo list file ${repoListFilename}: ${err.message}`);
+        throw new Error(`Failed to read repo-info.json: ${err.message}`);
     }
-    if (repoPaths.length === 0) {
-        throw new Error(`No repositories found in ${repoListFilename}`);
+    let filteredRepos = repos.filter(repo => repo.Repository && typeof repo.Repository === 'string' && repo.Repository.startsWith('https://community.opengroup.org/'));
+    if (filter && filter.length > 0) {
+        console.log(`Applying filters: ${filter.join(', ')}`);
+        for (const f of filter) {
+            const [key, value] = f.split('=', 2);
+            if (key && value !== undefined) {
+                filteredRepos = filteredRepos.filter(repo => repo[key] === value);
+            }
+        }
+    }
+    else {
+        console.warn('WARNING: No filters provided. This will add the item to ALL repositories.');
+        const rl = readline.createInterface({ input: process_1.stdin, output: process_1.stdout });
+        const answer = await rl.question('Are you sure you want to proceed? (y/n): ');
+        rl.close();
+        if (answer.toLowerCase() !== 'y' && answer.toLowerCase() !== 'yes') {
+            console.log('Operation aborted by user.');
+            return;
+        }
+    }
+    if (filteredRepos.length === 0) {
+        throw new Error(`No repositories matched the specified criteria.`);
     }
     try {
         // 1. Get Group ID
@@ -63,7 +88,15 @@ async function addItem(epicGroupPath, epicTitle, repoListFilename, itemTitle, it
         // 2. Get Epic IID
         const epicIid = await (0, gitlabClient_1.getEpicIid)(groupId, epicTitle);
         console.log(`Found Epic IID: ${epicIid}`);
-        for (const repoPath of repoPaths) {
+        let milestoneId;
+        if (milestone) {
+            console.log(`Looking up milestone ID for "${milestone}" in group "osdu/platform"...`);
+            const milestoneGroupId = await (0, gitlabClient_1.getGroupId)('osdu/platform');
+            milestoneId = await (0, gitlabClient_1.getGroupMilestoneId)(milestoneGroupId, milestone);
+            console.log(`Found Milestone ID: ${milestoneId}`);
+        }
+        for (const repo of filteredRepos) {
+            const repoPath = repo.Repository.replace('https://community.opengroup.org/', '');
             console.log(`\n--- Processing repo: ${repoPath} ---`);
             try {
                 // 3. Get Project ID
@@ -71,9 +104,14 @@ async function addItem(epicGroupPath, epicTitle, repoListFilename, itemTitle, it
                 console.log(`Found Project ID: ${projectId}`);
                 // 4. Create Issue
                 console.log('Creating issue...');
-                const issue = await gitlabClient_1.api.Issues.create(projectId, itemTitle, {
-                    description: itemContent,
-                });
+                const issueData = { description: itemContent };
+                if (milestoneId) {
+                    issueData.milestoneId = milestoneId;
+                }
+                if (labels) {
+                    issueData.labels = labels;
+                }
+                const issue = await gitlabClient_1.api.Issues.create(projectId, itemTitle, issueData);
                 console.log(`Created Issue #${issue.iid} in project ${projectId}: ${issue.web_url}`);
                 // 5. Link Issue to Epic
                 // POST /groups/:id/epics/:epic_iid/issues/:issue_id
